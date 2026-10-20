@@ -1,0 +1,4 @@
+dependencies {
+    compileOnly 'net.fabricmc:fabric-loader:0.16.14'
+    testImplementation 'net.fabricmc:fabric-loader:0.16.14'
+}

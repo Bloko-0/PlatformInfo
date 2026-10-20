@@ -1,0 +1,25 @@
+// Compile adapters against additional published API baselines.
+// These checks prove source/API compatibility, not full server runtime support.
+def matrix = [
+    spigotModern: [project: ':bukkit', dependency: 'org.spigotmc:spigot-api:1.20.1-R0.1-SNAPSHOT', release: 17],
+    paperModern: [project: ':bukkit', dependency: 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT', release: 21],
+    bungeeModern: [project: ':bungeecord', dependency: 'net.md-5:bungeecord-api:1.21-R0.3', release: 21],
+    fabricLegacy: [project: ':fabric', dependency: 'net.fabricmc:fabric-loader:0.12.12', release: 8],
+    fabricCurrent: [project: ':fabric', dependency: 'net.fabricmc:fabric-loader:0.19.3', release: 8]
+]
+def compileChecks = matrix.collect { label, entry ->
+    def api = configurations.create("compatibility${label.capitalize()}")
+    dependencies.add(api.name, entry.dependency)
+    tasks.register("compile${label.capitalize()}Compatibility", JavaCompile) {
+        dependsOn project(':common').tasks.named('classes')
+        source project(entry.project).sourceSets.main.allJava
+        classpath = api + project(':common').sourceSets.main.output
+        destinationDirectory = layout.buildDirectory.dir("compatibility/${label}")
+        javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+        options.release = entry.release
+        options.encoding = 'UTF-8'
+        options.compilerArgs += ['-proc:none']
+    }
+}
+tasks.register('compatibilityCheck') { dependsOn compileChecks }
+tasks.named('check') { dependsOn 'compatibilityCheck' }

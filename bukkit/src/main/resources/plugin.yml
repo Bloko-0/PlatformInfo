@@ -1,0 +1,17 @@
+name: PlatformInfo
+version: 1.0.0
+main: dev.bloko.platforminfo.bukkit.PlatformInfoBukkit
+author: Bloko
+description: A small cross-platform server information utility.
+api-version: '1.13'
+folia-supported: true
+commands:
+  platforminfo:
+    description: Show server platform, version, player count and plugin uptime.
+    usage: /platforminfo
+    aliases: [pinfo]
+    permission: platforminfo.use
+permissions:
+  platforminfo.use:
+    description: View server platform information.
+    default: op

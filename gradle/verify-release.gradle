@@ -1,0 +1,36 @@
+tasks.named('release') {
+    doLast {
+        def directory = layout.buildDirectory.dir('release').get().asFile
+        def artifacts = directory.listFiles().findAll { it.isFile() && it.name != 'SHA256SUMS.txt' }.sort { it.name }
+        def checksums = artifacts.collect { artifact ->
+            def hash = java.security.MessageDigest.getInstance('SHA-256').digest(artifact.bytes).encodeHex().toString()
+            "${hash}  ${artifact.name}"
+        }
+        new File(directory, 'SHA256SUMS.txt').setText(checksums.join('\n') + '\n', 'UTF-8')
+    }
+}
+tasks.register('verifyRelease') {
+    dependsOn 'release'
+    doLast {
+        def metadata = [bukkit: 'plugin.yml', bungeecord: 'bungee.yml', fabric: 'fabric.mod.json', velocity: 'velocity-plugin.json', 'velocity-current': 'velocity-plugin.json']
+        metadata.each { module, entry ->
+            def artifact = project(":${module}").tasks.named('jar').get().archiveFile.get().asFile
+            new java.util.zip.ZipFile(artifact).withCloseable { zip ->
+                if (zip.getEntry(entry) == null) throw new GradleException("Missing ${entry} in ${artifact.name}")
+                if (zip.getEntry('dev/bloko/platforminfo/core/PlatformReport.class') == null) throw new GradleException("Missing common code in ${artifact.name}")
+                int expected = module == 'velocity-current' ? 69 : module == 'velocity' ? 65 : 52
+                zip.entries().each { member ->
+                    if (member.name.endsWith('.class')) {
+                        new DataInputStream(zip.getInputStream(member)).withCloseable { input ->
+                            if (input.readInt() != 0xCAFEBABE as int) throw new GradleException('Invalid class file')
+                            input.readUnsignedShort()
+                            int major = input.readUnsignedShort()
+                            if (major > expected) throw new GradleException("Unexpected bytecode level ${major} in ${artifact.name}")
+                        }
+                    }
+                }
+            }
+        }
+        logger.lifecycle('Verified five installable JARs: entry metadata, shared classes, and bytecode levels.')
+    }
+}

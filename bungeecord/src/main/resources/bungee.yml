@@ -1,0 +1,5 @@
+name: PlatformInfo
+version: 1.0.0
+main: dev.bloko.platforminfo.bungee.PlatformInfoBungee
+author: Bloko
+description: Cross-platform proxy information utility.

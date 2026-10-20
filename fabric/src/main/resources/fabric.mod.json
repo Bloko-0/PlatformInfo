@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "platforminfo",
+  "version": "1.0.0",
+  "name": "PlatformInfo",
+  "description": "A loader-only Fabric dedicated-server startup diagnostic report.",
+  "authors": ["Bloko"],
+  "environment": "server",
+  "entrypoints": {"main": ["dev.bloko.platforminfo.fabric.PlatformInfoFabric"]},
+  "depends": {"fabricloader": ">=0.12.0", "minecraft": ">=1.14", "java": ">=8"}
+}

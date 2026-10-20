@@ -1,0 +1,59 @@
+plugins { id 'base'; id 'java' }
+allprojects {
+    group = 'dev.bloko.platforminfo'
+    version = '1.0.0'
+    repositories {
+        mavenCentral()
+        maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+        maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+        maven { url = 'https://maven.fabricmc.net/' }
+    }
+}
+subprojects { apply plugin: 'java' }
+subprojects {
+    java { toolchain.languageVersion = JavaLanguageVersion.of(25) }
+    tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+    tasks.named('compileJava') { options.release = 8 }
+    tasks.named('compileTestJava') { options.release = 21 }
+    dependencies {
+        testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+        testImplementation 'org.mockito:mockito-core:5.20.0'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+    test { useJUnitPlatform() }
+    tasks.withType(AbstractArchiveTask).configureEach {
+        preserveFileTimestamps = false
+        reproducibleFileOrder = true
+    }
+    if (name != 'common') {
+        dependencies { implementation project(':common') }
+        jar {
+            from project(':common').sourceSets.main.output
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            archiveBaseName = "PlatformInfo-${project.name}"
+        }
+    }
+}
+project(':velocity-current') {
+    sourceSets.main.java.srcDirs = [rootProject.file('velocity/src/main/java')]
+}
+tasks.named('build') { dependsOn subprojects.collect { it.tasks.named('build') } }
+tasks.register('sourceZip', Zip) {
+    archiveFileName = "PlatformInfo-${project.version}-source.zip"
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+    into('PlatformInfo') {
+        from projectDir
+        exclude '**/build/**', '**/.gradle/**', '**/.idea/**', '**/.git/**', '**/*.iml', '**/.verification/**', '**/run/**', '**/*.log'
+    }
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+tasks.register('release', Sync) {
+    dependsOn 'build', 'sourceZip'
+    into layout.buildDirectory.dir('release')
+    from subprojects.findAll { it.name != 'common' }.collect { it.tasks.named('jar').flatMap { task -> task.archiveFile } }
+    from tasks.named('sourceZip').flatMap { it.archiveFile }
+}
+
+apply from: 'gradle/compatibility.gradle'
+apply from: 'gradle/verify-release.gradle'
