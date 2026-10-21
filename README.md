@@ -1,47 +1,53 @@
 # PlatformInfo
 
-A small Java utility with separate adapters for Bukkit-family servers, Velocity, BungeeCord, and Fabric dedicated servers.
+A small Minecraft plugin that shows basic server information. It has separate builds for Bukkit-based servers, Velocity, BungeeCord and Fabric.
 
-PlatformInfo demonstrates shared Java code, platform entry points, command permissions, automated checks, and separate release artifacts. Created by Bloko.
+## What it does
 
-## Features
+On Bukkit, Velocity and BungeeCord, use `/platforminfo` or `/pinfo` to see:
 
-On Bukkit-family servers and proxies, `/platforminfo` (alias `/pinfo`) shows the platform, software version, online player count, and time since the plugin started. Access requires `platforminfo.use`. Bukkit operators receive it by default; grant it explicitly through the proxy's permission system.
+- Server or proxy software and version
+- Online player count
+- Time since the plugin started
 
-The Fabric adapter logs the Minecraft and loader versions during startup and writes `config/platforminfo/startup-report.txt`. It uses Fabric Loader APIs only, without Minecraft mappings or Fabric API. It does not add an in-game command or track players.
+The command requires `platforminfo.use`. Bukkit operators have this permission by default.
 
-No network requests, metrics collection, player names, IP addresses, world changes, or persistent player data are involved.
+The Fabric version works a little differently. It prints the Minecraft and Fabric Loader versions during startup and saves them to `config/platforminfo/startup-report.txt`. There is no Fabric command.
 
-## Choose one artifact for each server process
+## Installation
 
-| Artifact | Destination | API baseline and requirements |
-| --- | --- | --- |
-| `PlatformInfo-bukkit-1.0.0.jar` | Server `plugins/` | Spigot API 1.8.8; Java 8 bytecode. Intended for Spigot, Paper, Purpur, and Folia. Use the Java version required by your server. |
-| `PlatformInfo-velocity-1.0.0.jar` | Proxy `plugins/` | Velocity API 3.4.0; Java 21 or newer. |
-| `PlatformInfo-velocity-current-1.0.0.jar` | Proxy `plugins/` | Velocity API 4.2.1; Java 25 or newer. |
-| `PlatformInfo-bungeecord-1.0.0.jar` | Proxy `plugins/` | BungeeCord API 1.16-R0.4; Java 8 bytecode. |
-| `PlatformInfo-fabric-1.0.0.jar` | Dedicated server `mods/` | Fabric Loader 0.12.0 or newer; Minecraft 1.14 or newer declared in metadata; use the Java version required by Minecraft. |
+Download the JAR for your platform from [Releases](https://github.com/Bloko-0/PlatformInfo/releases) and put it in the appropriate `plugins` or `mods` folder.
 
-Install only one Velocity variant per proxy. Restart the relevant process after copying its JAR.
+| File | Platform |
+| --- | --- |
+| `PlatformInfo-bukkit-1.0.0.jar` | Spigot, Paper, Purpur, Folia |
+| `PlatformInfo-velocity-1.0.0.jar` | Velocity 3.4 API / Java 21 |
+| `PlatformInfo-velocity-current-1.0.0.jar` | Velocity 4.2 API / Java 25 |
+| `PlatformInfo-bungeecord-1.0.0.jar` | BungeeCord |
+| `PlatformInfo-fabric-1.0.0.jar` | Fabric dedicated servers |
 
-The Bukkit adapter uses legacy command APIs, declares `api-version: 1.13` for modern servers, and declares Folia support. It performs no world/entity operations and schedules no tasks. Older Bukkit servers ignore the modern API declaration.
+Use only one Velocity build per proxy. Restart the server or proxy after installing it.
 
-These are target ranges and API baselines, not a claim that every server version has passed a live test. Paper and Purpur use the Bukkit artifact; Folia uses that artifact with the Folia metadata flag. Forge, NeoForge, Sponge, Bedrock servers, and other platforms are not implemented in this release.
+## Building from source
 
-## Verification
+Open the repository as a Gradle project in IntelliJ IDEA and use JDK 25 for Gradle.
 
-Run `gradlew.bat verifyRelease` on Windows, or `./gradlew verifyRelease` on other systems, with JDK 25 installed. The wrapper downloads Gradle and dependencies on the first build.
+On Windows:
 
-The build runs 14 automated tests: shared report formatting, Bukkit command registration/permissions/console dispatch in MockBukkit, proxy command behavior with Mockito, and Fabric startup-report writing with a mocked loader. The Velocity command tests run against both API lines.
+```bat
+gradlew.bat verifyRelease
+```
 
-Additional source compilation checks cover Spigot 1.20.1, Paper 1.21.11, BungeeCord 1.21-R0.3, and Fabric Loader 0.12.12 and 0.19.3. The packaged adapters compile against Spigot 1.8.8, BungeeCord 1.16-R0.4, Fabric Loader 0.16.14, and Velocity 3.4.0 / 4.2.1.
+On Linux or macOS:
 
-Packaging checks confirm the entry-point metadata, shared report class, and expected bytecode level in each installable JAR. These automated checks do not start real Minecraft servers or establish runtime coverage across every historical version. See [COMPATIBILITY.md](COMPATIBILITY.md).
+```sh
+./gradlew verifyRelease
+```
 
-## Source and builds
+The finished JARs, source ZIP and checksums go into `build/release/`.
 
-Open the project directory in IntelliJ IDEA as a Gradle project and select JDK 25 for the Gradle JVM. Each adapter has its own module; the common report lives in `common/`.
+The project is split into `common/` for report formatting and a module for each platform. Tests cover report formatting, commands and Fabric startup output. The build also checks compilation against several older and newer APIs.
 
-`verifyRelease` produces five installable JARs, the complete source ZIP, and `SHA256SUMS.txt` in `build/release/`. Source archives exclude IDE state, build caches, and Git metadata. GitHub Actions repeats the build and uploads the release artifacts.
+Compatibility checks are not the same as testing on a running server. See [COMPATIBILITY.md](COMPATIBILITY.md) for the versions checked and the remaining limits.
 
-[Releases](https://github.com/Bloko-0/PlatformInfo/releases) · [Issues](https://github.com/Bloko-0/PlatformInfo/issues)
+Made by Bloko.

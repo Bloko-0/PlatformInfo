@@ -10,23 +10,38 @@ import java.util.logging.Logger;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 
-/** Loader-only server utility: no mapped Minecraft classes or Fabric API dependency. */
 public final class PlatformInfoFabric implements ModInitializer {
-    @Override public void onInitialize() {
+    private static final Logger LOGGER = Logger.getLogger("PlatformInfo");
+
+    @Override
+    public void onInitialize() {
         FabricLoader loader = FabricLoader.getInstance();
-        String minecraft = loader.getModContainer("minecraft")
-                .map(mod -> mod.getMetadata().getVersion().getFriendlyString()).orElse("Unknown");
-        String loaderVersion = loader.getModContainer("fabricloader")
-                .map(mod -> mod.getMetadata().getVersion().getFriendlyString()).orElse("Unknown");
-        List<String> report = PlatformReport.create("Fabric Loader " + loaderVersion, minecraft, 0, 0).subList(0, 3);
-        Path reportFile = loader.getConfigDir().resolve("platforminfo").resolve("startup-report.txt");
+
+        String minecraftVersion = getVersion(loader, "minecraft");
+        String fabricVersion = getVersion(loader, "fabricloader");
+
+        // Only the version information is available from the loader at startup.
+        List<String> report = PlatformReport.create(
+                "Fabric Loader " + fabricVersion, minecraftVersion, 0, 0
+        ).subList(0, 3);
+
+        Path folder = loader.getConfigDir().resolve("platforminfo");
+
         try {
-            Files.createDirectories(reportFile.getParent());
-            Files.write(reportFile, report, StandardCharsets.UTF_8);
-        } catch (IOException error) {
-            // Do not log user-folder paths or operating-system exception messages.
-            Logger.getLogger("PlatformInfo").warning("Could not save startup-report.txt; see the startup report below.");
+            Files.createDirectories(folder);
+            Files.write(folder.resolve("startup-report.txt"), report, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            LOGGER.warning("Could not save startup-report.txt");
         }
-        for (String line : report) Logger.getLogger("PlatformInfo").info(line);
+
+        for (String line : report) {
+            LOGGER.info(line);
+        }
+    }
+
+    private String getVersion(FabricLoader loader, String modId) {
+        return loader.getModContainer(modId)
+                .map(mod -> mod.getMetadata().getVersion().getFriendlyString())
+                .orElse("Unknown");
     }
 }

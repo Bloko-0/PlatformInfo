@@ -6,17 +6,32 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-@Plugin(id = "platforminfo", name = "PlatformInfo", version = "1.0.0",
-        authors = {"Bloko"}, description = "Cross-platform server information utility")
+@Plugin(
+        id = "platforminfo",
+        name = "PlatformInfo",
+        version = "1.0.0",
+        authors = {"Bloko"},
+        description = "Cross-platform server information utility"
+)
 public final class PlatformInfoVelocity {
     private final ProxyServer proxy;
-    private final long started = System.nanoTime();
+    private final long startedAt = System.nanoTime();
 
-    @Inject public PlatformInfoVelocity(ProxyServer proxy) { this.proxy = proxy; }
+    @Inject
+    public PlatformInfoVelocity(ProxyServer proxy) {
+        this.proxy = proxy;
+    }
 
-    @Subscribe public void initialize(ProxyInitializeEvent event) {
+    @Subscribe
+    public void initialize(ProxyInitializeEvent event) {
         proxy.getCommandManager().register(
-                proxy.getCommandManager().metaBuilder("platforminfo").aliases("pinfo").plugin(this).build(),
-                new VelocityInfoCommand(proxy, () -> (System.nanoTime() - started) / 1_000_000_000L));
+                proxy.getCommandManager()
+                        .metaBuilder("platforminfo")
+                        .aliases("pinfo")
+                        .plugin(this)
+                        .build(),
+                new VelocityInfoCommand(proxy,
+                        () -> (System.nanoTime() - startedAt) / 1_000_000_000L)
+        );
     }
 }
